@@ -1,0 +1,37 @@
+{
+  "resources": [
+    {
+      "id": "tutorial-001",
+      "title": "Getting Started with Transformers",
+      "description": "Learn the basics of transformer models and how to use them for NLP tasks.",
+      "difficulty": "beginner",
+      "duration": "15 min",
+      "tags": ["transformers", "nlp", "basics"],
+      "author": "Tiny AI Team",
+      "lastUpdated": "2026-04-08",
+      "content": "# Getting Started with Transformers\n\n## Introduction\n\nTransformers have revolutionized natural language processing. This tutorial will guide you through the basics.\n\n## What are Transformers?\n\nTransformers are a type of neural network architecture that uses self-attention mechanisms to process sequential data.\n\n### Key Components\n\n1. **Self-Attention**: Allows the model to weigh the importance of different words\n2. **Positional Encoding**: Adds information about word positions\n3. **Feed-Forward Networks**: Process the attention outputs\n\n## Your First Transformer\n\nHere's a simple example using Hugging Face:\n\n```python\nfrom transformers import pipeline\n\n# Create a text generation pipeline\ngenerator = pipeline('text-generation', model='gpt2')\n\n# Generate text\nresult = generator(\"Hello, I am learning about\", max_length=30)\nprint(result[0]['generated_text'])\n```\n\n## Next Steps\n\n- Explore different model architectures\n- Try fine-tuning on your own data\n- Learn about attention mechanisms in depth\n\n## Resources\n\n- [Hugging Face Documentation](https://huggingface.co/docs)\n- [Attention is All You Need Paper](https://arxiv.org/abs/1706.03762)"
+    },
+    {
+      "id": "tutorial-002",
+      "title": "Fine-tuning Language Models",
+      "description": "Master the art of fine-tuning pre-trained models for your specific use case.",
+      "difficulty": "intermediate",
+      "duration": "30 min",
+      "tags": ["fine-tuning", "training", "advanced"],
+      "author": "Tiny AI Team",
+      "lastUpdated": "2026-04-08",
+      "content": "# Fine-tuning Language Models\n\n## Overview\n\nFine-tuning allows you to adapt pre-trained models to your specific tasks with minimal data.\n\n## Why Fine-tune?\n\n- Leverage pre-trained knowledge\n- Require less training data\n- Faster training times\n- Better performance on specific tasks\n\n## Steps to Fine-tune\n\n### 1. Prepare Your Dataset\n\n```python\nfrom datasets import load_dataset\n\ndataset = load_dataset('your_dataset')\n```\n\n### 2. Load Pre-trained Model\n\n```python\nfrom transformers import AutoModelForSequenceClassification\n\nmodel = AutoModelForSequenceClassification.from_pretrained('bert-base-uncased')\n```\n\n### 3. Configure Training\n\n```python\nfrom transformers import TrainingArguments\n\ntraining_args = TrainingArguments(\n    output_dir='./results',\n    num_train_epochs=3,\n    per_device_train_batch_size=16,\n    learning_rate=2e-5\n)\n```\n\n## Best Practices\n\n- Start with a small learning rate\n- Monitor validation loss\n- Use gradient accumulation for large models\n- Save checkpoints regularly\n\n## Common Pitfalls\n\n- Overfitting on small datasets\n- Incorrect tokenization\n- Not freezing layers when appropriate"
+    },
+    {
+      "id": "tutorial-003",
+      "title": "Building RAG Applications",
+      "description": "Create powerful Retrieval-Augmented Generation systems for question answering.",
+      "difficulty": "advanced",
+      "duration": "45 min",
+      "tags": ["rag", "retrieval", "qa"],
+      "author": "Tiny AI Team",
+      "lastUpdated": "2026-04-08",
+      "content": "# Building RAG Applications\n\n## What is RAG?\n\nRetrieval-Augmented Generation combines information retrieval with language generation.\n\n## Architecture\n\n```\nQuery → Retriever → Context + Query → Generator → Answer\n```\n\n## Implementation\n\n### 1. Set up Vector Store\n\n```python\nfrom langchain.vectorstores import FAISS\nfrom langchain.embeddings import HuggingFaceEmbeddings\n\nembeddings = HuggingFaceEmbeddings()\nvectorstore = FAISS.from_documents(documents, embeddings)\n```\n\n### 2. Create Retriever\n\n```python\nretriever = vectorstore.as_retriever(search_kwargs={\"k\": 3})\n```\n\n### 3. Build RAG Chain\n\n```python\nfrom langchain.chains import RetrievalQA\nfrom langchain.llms import HuggingFacePipeline\n\nqa_chain = RetrievalQA.from_chain_type(\n    llm=llm,\n    retriever=retriever,\n    return_source_documents=True\n)\n```\n\n## Advanced Topics\n\n- Hybrid search (dense + sparse)\n- Re-ranking strategies\n- Context compression\n- Multi-hop reasoning\n\n## Performance Optimization\n\n- Batch processing\n- Caching embeddings\n- Async retrieval\n- Model quantization"
+    }
+  ]
+}

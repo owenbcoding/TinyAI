@@ -1,0 +1,65 @@
+{
+  "resources": [
+    {
+      "id": "repo-001",
+      "title": "Tiny AI Github Repo",
+      "url": "https://github.com/TheTinyAIServer/TinyAI",
+      "date": "2024-04-07",
+      "tags": ["github", "tiny ai", "repository"],
+      "type": "LIBS",
+      "note": "Main repository for Tiny AI project",
+      "sources": [
+        {
+          "label": "GitHub Repository",
+          "url": "https://github.com/TheTinyAIServer/TinyAI",
+          "type": "github"
+        },
+        {
+          "label": "Documentation",
+          "url": "https://github.com/TheTinyAIServer/TinyAI#readme",
+          "type": "docs"
+        }
+      ]
+    },
+    {
+      "id": "repo-002",
+      "title": "Tiny AI — Community",
+      "url": "https://github.com/TheTinyAIServer",
+      "date": "2024-01-06",
+      "tags": ["community", "organization"],
+      "type": "COMMUNITY",
+      "note": "Tiny AI GitHub organization"
+    },
+    {
+      "id": "repo-003",
+      "title": "Transformers by Hugging Face",
+      "url": "https://github.com/huggingface/transformers",
+      "date": "2018-10-29",
+      "tags": ["transformers", "nlp", "library"],
+      "type": "LIBS",
+      "note": "State-of-the-art Machine Learning for PyTorch, TensorFlow, and JAX",
+      "sources": [
+        {
+          "label": "GitHub Repository",
+          "url": "https://github.com/huggingface/transformers",
+          "type": "github"
+        },
+        {
+          "label": "Documentation",
+          "url": "https://huggingface.co/docs/transformers",
+          "type": "docs"
+        },
+        {
+          "label": "Hugging Face Hub",
+          "url": "https://huggingface.co/models",
+          "type": "huggingface"
+        },
+        {
+          "label": "Quick Tour",
+          "url": "https://huggingface.co/docs/transformers/quicktour",
+          "type": "website"
+        }
+      ]
+    }
+  ]
+}

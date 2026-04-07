@@ -1,0 +1,123 @@
+{
+  "resources": [
+    {
+      "id": "hf-001",
+      "title": "Llama 3.2 1B Instruct",
+      "url": "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct",
+      "date": "2024-09-25",
+      "tags": ["llama", "meta", "language-model", "chat"],
+      "type": "HUB",
+      "note": "Fast and efficient for quick responses",
+      "sources": [
+        {
+          "label": "Model Page",
+          "url": "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct",
+          "type": "huggingface"
+        },
+        {
+          "label": "Model Card",
+          "url": "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct#model-card",
+          "type": "docs"
+        }
+      ]
+    },
+    {
+      "id": "hf-002",
+      "title": "Llama 3.2 3B Instruct",
+      "url": "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct",
+      "date": "2024-09-25",
+      "tags": ["llama", "meta", "language-model", "chat"],
+      "type": "HUB",
+      "note": "Balanced performance and quality",
+      "sources": [
+        {
+          "label": "Model Page",
+          "url": "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct",
+          "type": "huggingface"
+        },
+        {
+          "label": "Model Card",
+          "url": "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct#model-card",
+          "type": "docs"
+        }
+      ]
+    },
+    {
+      "id": "hf-003",
+      "title": "Mistral 7B Instruct v0.3",
+      "url": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3",
+      "date": "2024-05-22",
+      "tags": ["mistral", "language-model", "instruct", "chat"],
+      "type": "HUB",
+      "note": "High quality responses with strong reasoning",
+      "sources": [
+        {
+          "label": "Model Page",
+          "url": "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3",
+          "type": "huggingface"
+        },
+        {
+          "label": "Documentation",
+          "url": "https://docs.mistral.ai/",
+          "type": "docs"
+        },
+        {
+          "label": "GitHub",
+          "url": "https://github.com/mistralai/mistral-inference",
+          "type": "github"
+        }
+      ]
+    },
+    {
+      "id": "hf-004",
+      "title": "Phi-3 Mini 4K Instruct",
+      "url": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct",
+      "date": "2024-04-23",
+      "tags": ["phi", "microsoft", "language-model", "chat"],
+      "type": "HUB",
+      "note": "Compact model with impressive capabilities",
+      "sources": [
+        {
+          "label": "Model Page",
+          "url": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct",
+          "type": "huggingface"
+        },
+        {
+          "label": "Technical Report",
+          "url": "https://arxiv.org/abs/2404.14219",
+          "type": "paper"
+        }
+      ]
+    },
+    {
+      "id": "hf-005",
+      "title": "Qwen2.5 7B Instruct",
+      "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct",
+      "date": "2024-09-19",
+      "tags": ["qwen", "alibaba", "language-model", "chat"],
+      "type": "HUB",
+      "note": "Excellent multilingual support and reasoning",
+      "sources": [
+        {
+          "label": "Model Page",
+          "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct",
+          "type": "huggingface"
+        },
+        {
+          "label": "GitHub",
+          "url": "https://github.com/QwenLM/Qwen2.5",
+          "type": "github"
+        }
+      ]
+    },
+    {
+      "id": "hf-006",
+      "title": "Tiny AI Hugging Face Page",
+      "url": "https://huggingface.co/TheTinyAIServer",
+      "date": "2024-04-07",
+      "tags": ["hugging face", "tiny ai", "organization"],
+      "type": "HUB",
+      "note": "Official Tiny AI organization on Hugging Face"
+    }
+  ]
+}

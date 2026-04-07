@@ -1,0 +1,65 @@
+{
+  "resources": [
+    {
+      "id": "paper-001",
+      "title": "Attention is All You Need",
+      "url": "https://arxiv.org/abs/1706.03762",
+      "date": "2017-06-12",
+      "tags": ["transformer", "nlp", "attention"],
+      "type": "PAPER",
+      "note": "The foundational paper introducing the Transformer architecture",
+      "sources": [
+        {
+          "label": "arXiv Paper",
+          "url": "https://arxiv.org/abs/1706.03762",
+          "type": "arxiv"
+        },
+        {
+          "label": "PDF Download",
+          "url": "https://arxiv.org/pdf/1706.03762.pdf",
+          "type": "paper"
+        },
+        {
+          "label": "GitHub Code",
+          "url": "https://github.com/tensorflow/tensor2tensor",
+          "type": "github"
+        }
+      ]
+    },
+    {
+      "id": "paper-002",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers",
+      "url": "https://arxiv.org/abs/1810.04805",
+      "date": "2018-10-11",
+      "tags": ["bert", "nlp", "pretraining"],
+      "type": "PAPER",
+      "note": "Introduced bidirectional training of Transformers",
+      "sources": [
+        {
+          "label": "arXiv Paper",
+          "url": "https://arxiv.org/abs/1810.04805",
+          "type": "arxiv"
+        },
+        {
+          "label": "GitHub Repository",
+          "url": "https://github.com/google-research/bert",
+          "type": "github"
+        },
+        {
+          "label": "Hugging Face Models",
+          "url": "https://huggingface.co/models?search=bert",
+          "type": "huggingface"
+        }
+      ]
+    },
+    {
+      "id": "paper-003",
+      "title": "GPT-3: Language Models are Few-Shot Learners",
+      "url": "https://arxiv.org/abs/2005.14165",
+      "date": "2020-05-28",
+      "tags": ["gpt", "language-model", "few-shot"],
+      "type": "PAPER",
+      "note": "Demonstrated the power of large-scale language models"
+    }
+  ]
+}
