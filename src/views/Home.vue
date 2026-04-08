@@ -10,13 +10,18 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useResourcesStore } from '../stores/resources'
 import ResourceTabs from '../components/resources/ResourceTabs.vue'
 import ResourceList from '../components/resources/ResourceList.vue'
 
 const resourcesStore = useResourcesStore()
 const activeTab = computed(() => resourcesStore.activeTab)
+
+// Ensure JSON loaders are configured on mount
+onMounted(() => {
+  resourcesStore.useJSONLoaders('./data')
+})
 </script>
 
 <style scoped>

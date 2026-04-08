@@ -18,7 +18,12 @@
         <li><router-link to="/learn"><i class="fas fa-graduation-cap"></i> LEARN</router-link></li>
         <li><router-link to="/bot"><i class="fas fa-comments"></i> CHAT</router-link></li>
         <li>
-          <button @click="toggleTheme" class="theme-toggle" :aria-label="isDarkMode ? 'Switch to Normal Mode' : 'Switch to Dark Mode'">
+          <button 
+            ref="themeButton"
+            @click="toggleTheme" 
+            class="theme-toggle" 
+            :aria-label="isDarkMode ? 'Switch to Normal Mode' : 'Switch to Dark Mode'"
+          >
             <i class="fas fa-sun sun-icon" :class="{ 'hidden': isDarkMode }"></i>
             <i class="fas fa-moon moon-icon" :class="{ 'visible': isDarkMode }"></i>
           </button>
@@ -29,7 +34,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useResourcesStore } from '../../stores/resources'
 import { useThemeStore } from '../../stores/theme'
@@ -37,6 +42,9 @@ import { useThemeStore } from '../../stores/theme'
 const router = useRouter()
 const resourcesStore = useResourcesStore()
 const themeStore = useThemeStore()
+const themeButton = ref(null)
+
+const emit = defineEmits(['theme-transition'])
 
 const isDarkMode = computed(() => themeStore.isDarkMode)
 
@@ -46,19 +54,35 @@ function switchTab(tab) {
 }
 
 function toggleTheme() {
-  themeStore.toggleTheme()
+  if (!themeButton.value) {
+    themeStore.toggleTheme()
+    return
+  }
+  
+  // Get button position
+  const rect = themeButton.value.getBoundingClientRect()
+  const x = rect.left + rect.width / 2
+  const y = rect.top + rect.height / 2
+  
+  // Emit event to parent for transition handling
+  emit('theme-transition', {
+    x,
+    y,
+    isDark: !isDarkMode.value
+  })
 }
 </script>
 
 <style scoped>
 header {
-  background-color: transparent;
-  color: var(--text-light);
+  background-color: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #24292f);
   padding: var(--spacing-sm) 0;
   position: fixed;
   width: 100%;
   top: 0;
   z-index: 1000;
+  border-bottom: 1px solid var(--border-primary, #d0d7de);
 }
 
 nav {
@@ -75,7 +99,7 @@ nav {
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
-  color: var(--text-light);
+  color: var(--text-primary, #24292f);
 }
 
 .logo-icon {
@@ -91,7 +115,7 @@ nav {
   font-size: 1.4rem;
   font-weight: 900;
   letter-spacing: 0.08em;
-  color: #f5e6b3;
+  color: var(--text-primary, #24292f);
   text-transform: uppercase;
 }
 
@@ -107,7 +131,7 @@ nav {
 }
 
 .nav-links a {
-  color: var(--text-light);
+  color: var(--text-primary, #24292f);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
@@ -121,7 +145,7 @@ nav {
 
 .nav-links a:hover,
 .nav-links a.router-link-active {
-  color: var(--accent-yellow);
+  color: var(--accent-blue, #0969da);
 }
 
 .dropdown-toggle::after {
@@ -141,9 +165,8 @@ nav {
   position: absolute;
   top: 100%;
   left: 0;
-  background-color: rgba(45, 38, 80, 0.98);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-primary, #d0d7de);
   border-radius: var(--radius-md);
   padding: var(--spacing-xs) 0;
   min-width: 180px;
@@ -151,7 +174,7 @@ nav {
   visibility: hidden;
   transform: translateY(-10px);
   transition: all var(--transition-base);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   list-style: none;
   margin-top: var(--spacing-xs);
 }
@@ -169,7 +192,7 @@ nav {
 }
 
 .dropdown-menu a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-secondary, #f6f8fa);
 }
 
 /* Theme Toggle */
@@ -203,7 +226,7 @@ nav {
 }
 
 .sun-icon {
-  color: #f5e6b3;
+  color: #f59e0b;
   opacity: 1;
   transform: rotate(0deg) scale(1);
 }
@@ -214,7 +237,7 @@ nav {
 }
 
 .moon-icon {
-  color: #f5e6b3;
+  color: #6366f1;
   opacity: 0;
   transform: rotate(-180deg) scale(0);
 }

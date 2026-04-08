@@ -6,7 +6,7 @@ This guide will get you up and running with the Tiny AI Resources Platform quick
 
 ## Prerequisites
 
-- Node.js 18 or higher
+- Node.js 18 or higher (Node.js 24 recommended)
 - npm or yarn
 - Git
 - GitHub account

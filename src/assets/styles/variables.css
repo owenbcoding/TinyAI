@@ -5,16 +5,34 @@
     --accent-yellow: #F5DA99;
     --accent-orange: #FB8C65;
     
-    /* Derived Colors */
-    --dark-purple: #2d2650;
-    --light-purple: #5a4d8a;
-    --paper-red: #FB8C65;
-    --repo-blue: #6B9BD1;
-    --hf-yellow: #F5DA99;
-    --text-light: #F5F5F5;
-    --text-muted: #C4B5D6;
-    --card-bg: rgba(67, 57, 114, 0.5);
-    --card-hover: rgba(67, 57, 114, 0.7);
+    /* Light Mode Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #d0d7de;
+    --border-secondary: #e8eaed;
+    
+    /* Text Colors */
+    --text-primary: #24292f;
+    --text-secondary: #57606a;
+    --text-tertiary: #6e7781;
+    
+    /* Accent Colors */
+    --accent-blue: #0969da;
+    --accent-green: #1a7f37;
+    --accent-yellow: #9a6700;
+    --accent-red: #cf222e;
+    
+    /* Card Colors */
+    --card-bg: #ffffff;
+    --card-border: #d0d7de;
+    --card-hover-bg: #f6f8fa;
+    
+    /* Legacy compatibility */
+    --text-light: #24292f;
+    --text-muted: #57606a;
     
     /* Spacing */
     --spacing-xs: 0.5rem;
@@ -74,7 +92,6 @@
     --card-hover-bg: var(--bg-tertiary);
     
     /* Override old variables for compatibility */
-    --primary-purple: var(--bg-primary);
     --text-light: var(--text-primary);
     --text-muted: var(--text-secondary);
 }

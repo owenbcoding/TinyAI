@@ -95,10 +95,15 @@ export const useResourcesStore = defineStore('resources', () => {
 
   // Initialize loaders - can be configured to use Markdown or API loaders
   function initializeLoaders() {
-    // Default: use static loaders with fallback data
-    resourceService.setLoader('papers', new StaticLoader(defaultPapers))
-    resourceService.setLoader('repos', new StaticLoader(defaultRepos))
-    resourceService.setLoader('huggingface', new StaticLoader(defaultHuggingFace))
+    // Try to use JSON loaders first (for production)
+    try {
+      useJSONLoaders('./data')
+    } catch (err) {
+      // Fallback to static loaders with default data
+      resourceService.setLoader('papers', new StaticLoader(defaultPapers))
+      resourceService.setLoader('repos', new StaticLoader(defaultRepos))
+      resourceService.setLoader('huggingface', new StaticLoader(defaultHuggingFace))
+    }
   }
 
   // Configure to use markdown files from GitHub

@@ -3,9 +3,19 @@
     <div class="learn-container">
       <!-- Tutorial Cards Grid -->
       <div v-if="!selectedTutorial" class="tutorials-section">
-        <div class="section-header">
-          <h1>Learn</h1>
-          <span class="count-badge">{{ tutorials.length }} Tutorials</span>
+        <div class="resource-header">
+          <div class="header-left">
+            <h2 class="section-title learn-title">
+              <i class="fas fa-graduation-cap"></i>
+              Learn
+            </h2>
+            <p class="section-description">
+              Tiny AI Discord bot will add more tutorials via PRs
+            </p>
+          </div>
+          <div class="header-right">
+            <span class="resource-count">{{ tutorials.length }}</span>
+          </div>
         </div>
 
         <!-- Loading State -->
@@ -138,15 +148,18 @@ onMounted(() => {
 
 <style scoped>
 .learn-page {
-  min-height: 100vh;
-  padding-top: 80px;
-  padding-bottom: 4rem;
+  min-height: calc(100vh - 200px);
+  padding: 100px 2rem 80px;
+  display: flex;
+  flex-direction: column;
 }
 
 .learn-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 var(--spacing-lg);
+  flex: 1;
+  width: 100%;
 }
 
 /* Tutorials Grid Section */
@@ -159,28 +172,52 @@ onMounted(() => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.section-header {
+.resource-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-primary, #30363d);
 }
 
-.section-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
+.header-left {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--text-primary, #e6edf3);
+}
+
+.section-title i {
+  font-size: 1.125rem;
+}
+
+.learn-title i {
+  color: var(--accent-green, #3fb950);
+}
+
+.section-description {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #7d8590);
   margin: 0;
 }
 
-.count-badge {
-  background: var(--bg-tertiary, #21262d);
-  color: var(--text-secondary, #7d8590);
-  padding: 0.375rem 0.875rem;
-  border-radius: 20px;
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.resource-count {
   font-size: 0.875rem;
-  font-weight: 600;
-  border: 1px solid var(--border-primary, #30363d);
+  color: var(--text-secondary, #7d8590);
+  font-weight: 500;
 }
 
 .tutorials-grid {
@@ -521,6 +558,12 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .resource-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
   .tutorials-grid {
     grid-template-columns: 1fr;
   }
