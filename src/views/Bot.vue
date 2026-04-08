@@ -543,21 +543,20 @@ async function sendMessage() {
   isLoading.value = true
 
   try {
-    // Use the official HfInference library - it handles CORS properly!
-    const response = await hfClient.textGeneration({
+    // Use chatCompletion for instruction/chat models
+    const response = await hfClient.chatCompletion({
       model: selectedModel.value,
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 512,
-        temperature: 0.7,
-        top_p: 0.95,
-        return_full_text: false
-      }
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 512,
+      temperature: 0.7,
+      top_p: 0.95
     })
     
     let assistantText = ''
-    if (response.generated_text) {
-      assistantText = response.generated_text
+    if (response.choices && response.choices.length > 0) {
+      assistantText = response.choices[0].message.content
     } else {
       assistantText = 'Sorry, I could not generate a response.'
     }
@@ -581,6 +580,8 @@ async function sendMessage() {
       errorMessage = `⏳ Model is loading... This can take 20-30 seconds. Please try again in a moment.`
     } else if (error.message && error.message.includes('rate limit')) {
       errorMessage = `⚠️ Rate limit exceeded. Please wait a moment and try again.`
+    } else if (error.message && error.message.includes('not supported')) {
+      errorMessage = `⚠️ This model may not be available. Try selecting a different model from the dropdown.`
     } else {
       errorMessage = `Error: ${error.message || 'Unknown error occurred'}`
     }
