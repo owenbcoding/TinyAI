@@ -4,11 +4,11 @@ import vue from '@vitejs/plugin-vue'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  base: process.env.NODE_ENV === 'production' ? '/TinyAI/' : '/',
+  base: '/TinyAI/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    emptyOutDir: true,
-    copyPublicDir: true
-  }
+    emptyOutDir: true
+  },
+  publicDir: 'public'
 })
