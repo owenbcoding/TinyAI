@@ -90,3 +90,20 @@ Use the official `@huggingface/inference` package which is designed for browser 
 ## Security Note
 
 Your Hugging Face API token is stored locally in your browser's localStorage and is never sent to any server other than Hugging Face's official API endpoints.
+
+**Token Storage:**
+- Stored in: Browser's localStorage (client-side only)
+- Never sent to: Our servers or any third-party services
+- Only sent to: Hugging Face's official API (router.huggingface.co)
+- Cleared when: You click "Clear Token" or clear browser data
+
+**Privacy:**
+- No server-side storage
+- No logging of tokens
+- No analytics or tracking of API usage
+- Token stays on your device only
+
+**Best Practices:**
+- Use a token with minimal permissions ("Inference Providers" only)
+- Clear your token when using shared computers
+- Regenerate tokens periodically on Hugging Face settings

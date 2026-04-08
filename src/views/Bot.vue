@@ -6,18 +6,41 @@
     </div>
     
     <!-- API Token Input -->
-    <div v-if="showTokenInput" class="token-input-overlay">
+    <div v-if="showTokenInput" class="token-input-overlay" @click.self="showTokenInput = false">
       <div class="token-input-card">
-        <h3>
-          <i class="fas fa-key"></i>
-          Hugging Face API Token Required
-        </h3>
-        <p>To use the chat feature, you need a Hugging Face API token with "Inference Providers" permission.</p>
-        <ol>
-          <li>Go to <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Hugging Face Settings</a></li>
-          <li>Create a new token with <strong>"Inference Providers"</strong> permission (not just "Read")</li>
-          <li>Paste it below</li>
-        </ol>
+        <div class="token-header">
+          <h3>
+            <i class="fas fa-key"></i>
+            Hugging Face API Token
+          </h3>
+          <button @click="showTokenInput = false" class="btn-close-token" title="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <p class="token-description">To use the chat feature, you need a Hugging Face API token with "Inference Providers" permission.</p>
+        
+        <div class="token-steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <span>Go to <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Hugging Face Settings</a></span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <span>Create a new token with <strong>"Inference Providers"</strong> permission</span>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <span>Paste your token below</span>
+            </div>
+          </div>
+        </div>
+        
         <div class="token-input-group">
           <input 
             v-model="API_TOKEN" 
@@ -27,13 +50,35 @@
             @keydown.enter="saveApiToken"
           />
           <button @click="saveApiToken" class="btn-save-token" :disabled="!API_TOKEN.trim()">
-            Save Token
+            <i class="fas fa-check"></i>
+            Save
           </button>
         </div>
-        <p class="token-note">
-          <i class="fas fa-lock"></i>
-          Your token is stored locally in your browser and never sent to our servers.
-        </p>
+        
+        <div class="token-security-info">
+          <div class="security-badge">
+            <i class="fas fa-shield-alt"></i>
+            <span>Your Privacy is Protected</span>
+          </div>
+          <ul class="security-list">
+            <li>
+              <i class="fas fa-check-circle"></i>
+              <span>Stored locally in your browser only</span>
+            </li>
+            <li>
+              <i class="fas fa-check-circle"></i>
+              <span>Never sent to our servers</span>
+            </li>
+            <li>
+              <i class="fas fa-check-circle"></i>
+              <span>Only used for Hugging Face API calls</span>
+            </li>
+            <li>
+              <i class="fas fa-check-circle"></i>
+              <span>No tracking or analytics</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
     
@@ -91,6 +136,11 @@
             <button v-if="API_TOKEN" @click="clearApiToken" class="btn-footer" title="Clear API token">
               <i class="fas fa-key"></i>
               Clear Token
+            </button>
+            
+            <button v-else @click="showTokenInput = true" class="btn-footer btn-enter-token" title="Enter API token">
+              <i class="fas fa-key"></i>
+              Enter Token
             </button>
           </div>
           
@@ -516,8 +566,8 @@ async function sendMessage() {
     ]
 
     console.log('Sending request with model:', selectedModel.value)
-    console.log('Messages:', conversationMessages)
-    console.log('Using token:', API_TOKEN.value.substring(0, 10) + '...')
+    console.log('Messages count:', conversationMessages.length)
+    console.log('Has token:', !!API_TOKEN.value)
 
     // Use HfInference chatCompletion method with auto provider selection
     const completion = await hfClient.chatCompletion({
@@ -674,79 +724,161 @@ function autoResize(event) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 2rem;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .token-input-card {
   background: var(--bg-secondary, #161b22);
   border: 1px solid var(--border-primary, #30363d);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 2rem;
-  max-width: 500px;
+  max-width: 540px;
   width: 100%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  position: relative;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.token-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
 }
 
 .token-input-card h3 {
   color: var(--text-primary, #e6edf3);
-  font-size: 1.25rem;
-  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex: 1;
+  font-weight: 600;
 }
 
 .token-input-card h3 i {
   color: var(--accent-blue, #58a6ff);
+  font-size: 1.25rem;
 }
 
-.token-input-card p {
+.btn-close-token {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #7d8590);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.btn-close-token:hover {
+  background: var(--bg-tertiary, #21262d);
+  color: var(--text-primary, #e6edf3);
+}
+
+.token-description {
   color: var(--text-secondary, #7d8590);
   font-size: 0.9375rem;
   line-height: 1.6;
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.5rem 0;
 }
 
-.token-input-card ol {
-  color: var(--text-secondary, #7d8590);
+.token-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  background: var(--accent-blue, #58a6ff);
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
   font-size: 0.875rem;
-  line-height: 1.6;
-  margin: 0 0 1.5rem 1.25rem;
-  padding: 0;
+  flex-shrink: 0;
 }
 
-.token-input-card ol li {
-  margin-bottom: 0.5rem;
+.step-content {
+  flex: 1;
+  padding-top: 0.25rem;
 }
 
-.token-input-card a {
+.step-content span {
+  color: var(--text-primary, #e6edf3);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.step-content a {
   color: var(--accent-blue, #58a6ff);
   text-decoration: none;
+  font-weight: 500;
 }
 
-.token-input-card a:hover {
+.step-content a:hover {
   text-decoration: underline;
+}
+
+.step-content strong {
+  color: var(--accent-blue, #58a6ff);
+  font-weight: 600;
 }
 
 .token-input-group {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .token-input {
   flex: 1;
   background: var(--bg-tertiary, #21262d);
   border: 1px solid var(--border-primary, #30363d);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-primary, #e6edf3);
-  font-size: 0.875rem;
-  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  padding: 0.875rem 1rem;
   font-family: 'Courier New', monospace;
   outline: none;
   transition: all 0.2s ease;
@@ -755,23 +887,37 @@ function autoResize(event) {
 .token-input:focus {
   border-color: var(--accent-blue, #58a6ff);
   background: var(--bg-secondary, #161b22);
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.token-input::placeholder {
+  color: var(--text-tertiary, #484f58);
 }
 
 .btn-save-token {
   background: var(--accent-blue, #58a6ff);
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #ffffff;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-save-token:hover:not(:disabled) {
   background: #4a95e8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+}
+
+.btn-save-token:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-save-token:disabled {
@@ -779,17 +925,50 @@ function autoResize(event) {
   cursor: not-allowed;
 }
 
-.token-note {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  color: var(--text-tertiary, #484f58);
-  margin: 0;
+.token-security-info {
+  background: rgba(46, 160, 67, 0.08);
+  border: 1px solid rgba(46, 160, 67, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
 }
 
-.token-note i {
+.security-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
   color: var(--accent-green, #3fb950);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.security-badge i {
+  font-size: 1.25rem;
+}
+
+.security-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.security-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--text-secondary, #7d8590);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.security-list li i {
+  color: var(--accent-green, #3fb950);
+  font-size: 0.875rem;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
 }
 
 
@@ -1129,6 +1308,16 @@ function autoResize(event) {
 
 .btn-footer:hover {
   color: var(--text-primary, #e6edf3);
+}
+
+.btn-enter-token {
+  color: var(--accent-blue, #58a6ff);
+  font-weight: 500;
+}
+
+.btn-enter-token:hover {
+  color: #4a95e8;
+  background: rgba(88, 166, 255, 0.1);
 }
 
 .footer-right {
