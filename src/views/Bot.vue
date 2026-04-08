@@ -2,7 +2,7 @@
   <section class="chat-section" :class="{ 'centered': messages.length === 0 }">
     <div class="wip-notice">
       <i class="fas fa-tools"></i>
-      <span>This chat interface is currently under development and not yet ready for use.</span>
+      <span>This chat interface is under development. Due to CORS restrictions, it requires a browser extension or backend proxy to work properly.</span>
     </div>
     
     <!-- API Token Input -->
@@ -507,6 +507,11 @@ function clearChat() {
 
 async function sendMessage() {
   if (!userInput.value.trim() || isLoading.value) return
+  
+  if (!API_TOKEN.value) {
+    showTokenInput.value = true
+    return
+  }
 
   const userMessage = {
     id: Date.now(),
@@ -529,6 +534,8 @@ async function sendMessage() {
   isLoading.value = true
 
   try {
+    // Note: Hugging Face Inference API has CORS restrictions
+    // For production, consider using a backend proxy or Hugging Face Inference Endpoints
     const response = await fetch(
       `https://api-inference.huggingface.co/models/${selectedModel.value}`,
       {
@@ -549,11 +556,21 @@ async function sendMessage() {
       }
     )
 
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`API Error (${response.status}): ${errorText}`)
+    }
+
     const data = await response.json()
     
     let assistantText = ''
     if (data.error) {
-      assistantText = `Error: ${data.error}`
+      // Handle model loading errors
+      if (data.error.includes('loading')) {
+        assistantText = `⏳ Model is loading... This can take 20-30 seconds. Please try again in a moment.`
+      } else {
+        assistantText = `Error: ${data.error}`
+      }
     } else if (Array.isArray(data) && data[0]?.generated_text) {
       assistantText = data[0].generated_text
     } else if (data.generated_text) {
@@ -574,13 +591,22 @@ async function sendMessage() {
     await nextTick()
     scrollToBottom()
   } catch (error) {
-    const errorMessage = {
+    let errorMessage = ''
+    
+    // Check for CORS error
+    if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+      errorMessage = `⚠️ CORS Error: Direct browser access to Hugging Face API is blocked.\n\nSolutions:\n1. Use a browser extension like "CORS Unblock" (for testing only)\n2. Deploy with a backend proxy\n3. Use Hugging Face Inference Endpoints with CORS enabled\n\nFor now, this chat feature works best when deployed with a proper backend.`
+    } else {
+      errorMessage = `Error: ${error.message}`
+    }
+    
+    const errorMsg = {
       id: Date.now() + 1,
       role: 'assistant',
-      content: `Error: ${error.message}`,
+      content: errorMessage,
       timestamp: new Date()
     }
-    messages.value.push(errorMessage)
+    messages.value.push(errorMsg)
   } finally {
     isLoading.value = false
   }
