@@ -121,27 +121,30 @@ main {
 
 /* Apply theme styles to overlay - Light Mode (default) */
 .theme-transition-overlay[data-theme="light"] {
-  background: #ffffff;
-  color: #24292f;
+  background: #514483;
+  color: #f5da99;
   
   /* Override CSS variables for light mode */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f6f8fa;
-  --bg-tertiary: #ffffff;
-  --border-primary: #d0d7de;
-  --border-secondary: #e8eaed;
-  --text-primary: #24292f;
-  --text-secondary: #57606a;
-  --text-tertiary: #6e7781;
-  --accent-blue: #0969da;
+  --bg-primary: #514483;
+  --bg-secondary: #5d4f92;
+  --bg-tertiary: #685a9f;
+  --border-primary: rgba(245, 218, 153, 0.18);
+  --border-secondary: rgba(245, 218, 153, 0.1);
+  --text-primary: #f5da99;
+  --text-secondary: rgba(245, 218, 153, 0.78);
+  --text-tertiary: rgba(245, 218, 153, 0.52);
+  --accent-blue: #fb8c65;
   --accent-green: #1a7f37;
   --accent-yellow: #9a6700;
   --accent-red: #cf222e;
-  --card-bg: #ffffff;
-  --card-border: #d0d7de;
-  --card-hover-bg: #f6f8fa;
-  --text-light: #24292f;
-  --text-muted: #57606a;
+  --card-bg: rgba(28, 20, 55, 0.2);
+  --card-border: rgba(245, 218, 153, 0.18);
+  --card-hover-bg: rgba(28, 20, 55, 0.34);
+  --text-light: #f5da99;
+  --text-muted: rgba(245, 218, 153, 0.78);
+  --header-bg: rgba(35, 24, 61, 0.94);
+  --header-text: #f5da99;
+  --header-hover: #fb8c65;
 }
 
 /* Apply theme styles to overlay - Dark Mode */
@@ -167,6 +170,9 @@ main {
   --card-hover-bg: #21262d;
   --text-light: #e6edf3;
   --text-muted: #7d8590;
+  --header-bg: rgba(13, 17, 23, 0.94);
+  --header-text: #e6edf3;
+  --header-hover: #58a6ff;
 }
 
 .theme-transition-overlay > * {
