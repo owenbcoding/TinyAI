@@ -1,8 +1,8 @@
 <template>
   <section class="chat-section" :class="{ 'centered': messages.length === 0 }">
-    <div class="wip-notice">
-      <i class="fas fa-tools"></i>
-      <span>Chat interface ready! Enter your Hugging Face API token to start chatting with AI models.</span>
+    <div v-if="false" class="wip-notice">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>Chat feature requires a backend proxy due to CORS restrictions. See <a href="https://github.com/OpenChatGit/TinyAI/blob/main/docs/CORS_WORKAROUND.md" target="_blank">CORS_WORKAROUND.md</a> for solutions.</span>
     </div>
     
     <!-- API Token Input -->
@@ -12,10 +12,10 @@
           <i class="fas fa-key"></i>
           Hugging Face API Token Required
         </h3>
-        <p>To use the chat feature, you need a Hugging Face API token.</p>
+        <p>To use the chat feature, you need a Hugging Face API token with "Inference Providers" permission.</p>
         <ol>
           <li>Go to <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Hugging Face Settings</a></li>
-          <li>Create a new token with "Read" access</li>
+          <li>Create a new token with <strong>"Inference Providers"</strong> permission (not just "Read")</li>
           <li>Paste it below</li>
         </ol>
         <div class="token-input-group">
@@ -41,7 +41,12 @@
       <div class="messages-inner">
         <div v-for="message in messages" :key="message.id" class="message" :class="message.role">
           <div class="message-content">
-            <div class="message-text">{{ message.content }}</div>
+            <div 
+              v-if="message.role === 'assistant'" 
+              class="message-text markdown-content" 
+              v-html="renderMarkdown(message.content)"
+            ></div>
+            <div v-else class="message-text">{{ message.content }}</div>
           </div>
         </div>
 
@@ -195,6 +200,25 @@
 <script setup>
 import { ref, nextTick, onMounted, watch, computed } from 'vue'
 import { HfInference } from '@huggingface/inference'
+import MarkdownIt from 'markdown-it'
+import hljs from 'highlight.js'
+
+// Initialize markdown-it with syntax highlighting
+const md = new MarkdownIt({
+  html: false, // Disable HTML tags for security
+  linkify: true, // Auto-convert URLs to links
+  typographer: true, // Enable smart quotes and other typographic replacements
+  highlight: function (str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return '<pre class="hljs"><code>' +
+               hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+               '</code></pre>'
+      } catch (__) {}
+    }
+    return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>'
+  }
+})
 
 const messages = ref([])
 const userInput = ref('')
@@ -207,6 +231,11 @@ const availableModels = ref([])
 const isLoadingModels = ref(false)
 const modelSearchQuery = ref('')
 const filteredModels = ref([])
+
+// Function to render markdown
+function renderMarkdown(content) {
+  return md.render(content)
+}
 
 // System specs for model recommendations
 const systemSpecs = ref({
@@ -256,6 +285,51 @@ const modelSizeEstimates = {
   '8B': 10,
   '13B': 16,
   '70B': 80
+}
+
+// Load models from Hugging Face Hub API that are available via Inference Providers
+async function loadModelsFromHuggingFace() {
+  try {
+    // Get all models available via Inference Providers for chat completion
+    const response = await fetch(
+      'https://huggingface.co/api/models?inference_provider=all&pipeline_tag=text-generation&sort=downloads&direction=-1&limit=50'
+    )
+    
+    if (response.ok) {
+      const models = await response.json()
+      
+      return models
+        .filter(m => {
+          const modelId = m.modelId || m.id
+          // Filter for instruction/chat models
+          return modelId && (
+            modelId.includes('Instruct') ||
+            modelId.includes('instruct') ||
+            modelId.includes('Chat') ||
+            modelId.includes('chat') ||
+            modelId.includes('Thinking') ||
+            modelId.includes('thinking')
+          )
+        })
+        .slice(0, 20) // Limit to top 20
+        .map(m => {
+          const modelId = m.modelId || m.id
+          const modelName = modelId.split('/').pop()
+          
+          return {
+            value: modelId,
+            label: modelName,
+            fullId: modelId,
+            downloads: m.downloads || 0,
+            note: `${(m.downloads || 0).toLocaleString()} downloads`,
+            isFromAPI: true
+          }
+        })
+    }
+  } catch (error) {
+    console.error('Failed to load from HF API:', error)
+  }
+  return []
 }
 
 // Get model size from name or metadata
@@ -314,145 +388,32 @@ function getModelRecommendation(model) {
   }
 }
 
-// Load available models from Hugging Face Hub API
-async function loadModelsFromHuggingFace() {
-  try {
-    // Use Hugging Face API to search for text-generation models
-    const response = await fetch(
-      'https://huggingface.co/api/models?pipeline_tag=text-generation&sort=downloads&direction=-1&limit=50'
-    )
-    
-    if (response.ok) {
-      const models = await response.json()
-      
-      return models
-        .filter(m => {
-          // Filter for instruction/chat models
-          const modelId = m.modelId || m.id
-          return modelId && (
-            modelId.includes('Instruct') ||
-            modelId.includes('instruct') ||
-            modelId.includes('Chat') ||
-            modelId.includes('chat')
-          )
-        })
-        .slice(0, 30) // Limit to top 30
-        .map(m => {
-          const modelId = m.modelId || m.id
-          const modelName = modelId.split('/').pop()
-          
-          // Get safetensors info if available
-          const safetensorsInfo = m.safetensors || {}
-          const totalSize = safetensorsInfo.total || 0
-          const parameters = safetensorsInfo.parameters || {}
-          
-          // Calculate total parameters
-          let totalParams = 0
-          for (const dtype in parameters) {
-            totalParams += parameters[dtype] || 0
-          }
-          
-          // Estimate VRAM from file size (rough estimate: size in bytes / 1GB)
-          const estimatedVRAM = totalSize > 0 ? Math.ceil(totalSize / (1024 * 1024 * 1024)) : null
-          
-          return {
-            value: modelId,
-            label: modelName,
-            fullId: modelId,
-            downloads: m.downloads || 0,
-            note: `${(m.downloads || 0).toLocaleString()} downloads`,
-            size: totalSize,
-            parameters: totalParams,
-            estimatedVRAM: estimatedVRAM
-          }
-        })
-    }
-  } catch (error) {
-    console.error('Failed to load from HF API:', error)
-  }
-  return []
-}
-
 // Load available models
 async function loadAvailableModels() {
   isLoadingModels.value = true
   try {
-    // First try to load from local huggingface.json
-    const localResponse = await fetch('./data/huggingface.json')
-    let localModels = []
-    
-    if (localResponse.ok) {
-      const data = await localResponse.json()
-      
-      localModels = data.resources
-        .filter(r => r.type === 'HUB' && r.url.includes('huggingface.co/'))
-        .map(r => {
-          const match = r.url.match(/huggingface\.co\/([^\/]+\/[^\/\?#]+)/)
-          if (match) {
-            return {
-              value: match[1],
-              label: r.title,
-              fullId: match[1],
-              note: r.note,
-              isLocal: true
-            }
-          }
-          return null
-        })
-        .filter(m => m !== null)
-    }
-    
-    // Then load from Hugging Face API
+    // Load ONLY models that are actually available via Inference Providers API
     const hfModels = await loadModelsFromHuggingFace()
     
-    // Combine and deduplicate
-    const allModels = [...localModels, ...hfModels]
-    const uniqueModels = Array.from(
-      new Map(allModels.map(m => [m.value, m])).values()
-    )
-    
-    // Sort by downloads (HF models) and local first
-    availableModels.value = uniqueModels.sort((a, b) => {
-      if (a.isLocal && !b.isLocal) return -1
-      if (!a.isLocal && b.isLocal) return 1
-      return (b.downloads || 0) - (a.downloads || 0)
-    })
-    
-    // Initialize filtered models
-    filteredModels.value = availableModels.value
-    
-    // Select first model if none selected
-    if (availableModels.value.length > 0 && !selectedModel.value) {
-      selectedModel.value = availableModels.value[0].value
+    if (hfModels && hfModels.length > 0) {
+      availableModels.value = hfModels
+      filteredModels.value = hfModels
+      console.log('Loaded', hfModels.length, 'models from Inference Providers API')
+      
+      // Select first model if none selected
+      if (!selectedModel.value) {
+        selectedModel.value = hfModels[0].value
+        console.log('Auto-selected model:', selectedModel.value)
+      }
+    } else {
+      console.error('No models available from Inference Providers API')
+      availableModels.value = []
+      filteredModels.value = []
     }
   } catch (error) {
     console.error('Failed to load models:', error)
-    // Fallback to default models
-    availableModels.value = [
-      { 
-        value: 'meta-llama/Llama-3.2-1B-Instruct', 
-        label: 'Llama 3.2 1B Instruct',
-        fullId: 'meta-llama/Llama-3.2-1B-Instruct',
-        note: 'Fast and efficient',
-        isLocal: true
-      },
-      { 
-        value: 'meta-llama/Llama-3.2-3B-Instruct', 
-        label: 'Llama 3.2 3B Instruct',
-        fullId: 'meta-llama/Llama-3.2-3B-Instruct',
-        note: 'Balanced performance',
-        isLocal: true
-      },
-      { 
-        value: 'mistralai/Mistral-7B-Instruct-v0.3', 
-        label: 'Mistral 7B Instruct v0.3',
-        fullId: 'mistralai/Mistral-7B-Instruct-v0.3',
-        note: 'High quality responses',
-        isLocal: true
-      }
-    ]
-    filteredModels.value = availableModels.value
-    selectedModel.value = availableModels.value[0].value
+    availableModels.value = []
+    filteredModels.value = []
   } finally {
     isLoadingModels.value = false
   }
@@ -530,7 +491,6 @@ async function sendMessage() {
   }
 
   messages.value.push(userMessage)
-  const prompt = userInput.value
   userInput.value = ''
   
   if (inputField.value) {
@@ -543,28 +503,34 @@ async function sendMessage() {
   isLoading.value = true
 
   try {
-    // Build conversation history for context
-    const conversationMessages = messages.value.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }))
+    // Build conversation history with system prompt
+    const conversationMessages = [
+      {
+        role: 'system',
+        content: 'You are a helpful assistant. Format your responses using markdown syntax directly (headings, lists, code blocks, etc.). Do NOT wrap your markdown in code blocks - use markdown formatting naturally in your response.'
+      },
+      ...messages.value.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+    ]
 
-    // Use chatCompletion for instruction/chat models
-    const response = await hfClient.chatCompletion({
+    console.log('Sending request with model:', selectedModel.value)
+    console.log('Messages:', conversationMessages)
+    console.log('Using token:', API_TOKEN.value.substring(0, 10) + '...')
+
+    // Use HfInference chatCompletion method with auto provider selection
+    const completion = await hfClient.chatCompletion({
       model: selectedModel.value,
       messages: conversationMessages,
       max_tokens: 512,
       temperature: 0.7,
-      top_p: 0.95,
-      stream: false
+      top_p: 0.95
     })
     
-    let assistantText = ''
-    if (response.choices && response.choices.length > 0 && response.choices[0].message) {
-      assistantText = response.choices[0].message.content
-    } else {
-      assistantText = 'Sorry, I could not generate a response.'
-    }
+    console.log('Received completion:', completion)
+    
+    const assistantText = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.'
 
     const assistantMessage = {
       id: Date.now() + 1,
@@ -579,21 +545,68 @@ async function sendMessage() {
     scrollToBottom()
   } catch (error) {
     console.error('Chat error:', error)
+    console.error('Error name:', error.name)
+    console.error('Error message:', error.message)
+    console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+    if (error.response) {
+      console.error('Error response status:', error.response.status)
+      console.error('Error response body:', error.response.body)
+      console.error('Error response headers:', error.response.headers)
+    }
+    if (error.request) {
+      console.error('Error request:', error.request)
+    }
+    
     let errorMessage = ''
     
-    // Handle different error types
-    if (error.message && error.message.includes('loading')) {
-      errorMessage = `⏳ Model is loading... This can take 20-30 seconds. Please try again in a moment.`
-    } else if (error.message && error.message.includes('rate limit')) {
-      errorMessage = `⚠️ Rate limit exceeded. Please wait a moment and try again.`
-    } else if (error.message && error.message.includes('not supported')) {
-      errorMessage = `⚠️ This model may not be available. Try selecting a different model from the dropdown.`
-    } else if (error.message && error.message.includes('400')) {
-      errorMessage = `⚠️ Bad request. This model might not support chat completion. Try a different model like "meta-llama/Llama-3.2-3B-Instruct".`
-    } else if (error.message && error.message.includes('401') || error.message.includes('403')) {
-      errorMessage = `⚠️ Authentication error. Please check your API token.`
+    // Handle different error types from @huggingface/inference
+    if (error.name === 'InferenceClientInputError') {
+      // Model doesn't support the task or provider issue
+      if (error.message.includes('not supported for task')) {
+        const match = error.message.match(/Supported task: (\w+)/)
+        const supportedTask = match ? match[1] : 'unknown'
+        
+        if (supportedTask === 'conversational') {
+          errorMessage = `⚠️ This model requires conversational API. Retrying with correct method...`
+          // The error already tells us to use conversational, so we know chatCompletion should work
+          errorMessage = `⚠️ Model configuration issue. Try selecting a different model from the dropdown.`
+        } else {
+          errorMessage = `⚠️ Model ${selectedModel.value} doesn't support chat. Supported task: ${supportedTask}\n\nPlease select a different model from the dropdown.`
+        }
+      } else if (error.message.includes('No Inference Provider available')) {
+        errorMessage = `⚠️ No inference provider available for this model.\n\nPlease select a different model from the dropdown.`
+      } else {
+        errorMessage = `⚠️ Input error: ${error.message}`
+      }
+    } else if (error.name === 'InferenceClientProviderApiError') {
+      // Provider API errors
+      if (error.message.includes('loading')) {
+        errorMessage = `⏳ Model is loading... This can take 20-30 seconds. Please try again in a moment.`
+      } else if (error.message.includes('rate limit')) {
+        errorMessage = `⚠️ Rate limit exceeded. Please wait a moment and try again.`
+      } else if (error.message.includes('HTTP error')) {
+        errorMessage = `⚠️ Provider API error. The model might not be available or configured correctly.\n\nTry one of these models:\n- Qwen/Qwen2.5-7B-Instruct-1M\n- meta-llama/Llama-3.2-3B-Instruct\n\nError: ${error.message}`
+      } else {
+        errorMessage = `⚠️ Provider error: ${error.message}`
+      }
+    } else if (error.name === 'InferenceClientHubApiError') {
+      // Hub API errors
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        errorMessage = `⚠️ Authentication error. Your API token needs "Inference Providers" permission.\n\n1. Go to https://huggingface.co/settings/tokens\n2. Create a new token\n3. Enable "Inference Providers" permission\n4. Clear your current token and enter the new one`
+      } else if (error.response?.status === 404) {
+        errorMessage = `⚠️ Model not found.\n\nPlease select a different model from the dropdown.`
+      } else {
+        errorMessage = `⚠️ Hub API error: ${error.message}`
+      }
+    } else if (error.name === 'InferenceClientProviderOutputError') {
+      errorMessage = `⚠️ Provider returned unexpected output. Try a different model.`
     } else {
-      errorMessage = `Error: ${error.message || 'Unknown error occurred'}\n\nTry selecting a different model from the dropdown.`
+      // Generic error handling - check if it might be a token permission issue
+      if (error.message.includes('HTTP error') || error.message.includes('400')) {
+        errorMessage = `⚠️ Request failed. This might be due to:\n\n1. Token missing "Inference Providers" permission\n   → Go to https://huggingface.co/settings/tokens\n   → Create new token with "Inference Providers" enabled\n\n2. Model not available via Inference Providers\n   → Select a different model from the dropdown\n\n3. Monthly quota exceeded\n   → Check your usage at https://huggingface.co/settings/billing`
+      } else {
+        errorMessage = `Error: ${error.message || 'Unknown error occurred'}\n\nPlease select a different model from the dropdown.`
+      }
     }
     
     const errorMsg = {
@@ -622,6 +635,9 @@ function autoResize(event) {
 </script>
 
 <style scoped>
+/* Import highlight.js theme */
+@import 'highlight.js/styles/github-dark.css';
+
 .chat-section {
   height: 100vh;
   display: flex;
@@ -835,6 +851,118 @@ function autoResize(event) {
   color: var(--text-primary, #e6edf3);
   line-height: 1.6;
   font-size: 0.9375rem;
+}
+
+/* Markdown content styling */
+.markdown-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-content :deep(h1),
+.markdown-content :deep(h2),
+.markdown-content :deep(h3),
+.markdown-content :deep(h4),
+.markdown-content :deep(h5),
+.markdown-content :deep(h6) {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-content :deep(h1) { font-size: 1.5rem; }
+.markdown-content :deep(h2) { font-size: 1.25rem; }
+.markdown-content :deep(h3) { font-size: 1.125rem; }
+
+.markdown-content :deep(p) {
+  margin-bottom: 1rem;
+}
+
+.markdown-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.markdown-content :deep(ul),
+.markdown-content :deep(ol) {
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+.markdown-content :deep(li) {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content :deep(code) {
+  background: var(--bg-tertiary, #21262d);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.875em;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.markdown-content :deep(pre) {
+  background: var(--bg-tertiary, #21262d);
+  border: 1px solid var(--border-primary, #30363d);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdown-content :deep(pre code) {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 3px solid var(--border-primary, #30363d);
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 1rem;
+  color: var(--text-secondary, #7d8590);
+}
+
+.markdown-content :deep(a) {
+  color: var(--accent-blue, #58a6ff);
+  text-decoration: none;
+}
+
+.markdown-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.markdown-content :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.markdown-content :deep(th),
+.markdown-content :deep(td) {
+  border: 1px solid var(--border-primary, #30363d);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.markdown-content :deep(th) {
+  background: var(--bg-tertiary, #21262d);
+  font-weight: 600;
+}
+
+.markdown-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--border-primary, #30363d);
+  margin: 1.5rem 0;
+}
+
+.markdown-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
 }
 
 .message.user .message-text {

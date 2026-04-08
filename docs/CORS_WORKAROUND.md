@@ -1,119 +1,92 @@
-# CORS Workaround for Chat Feature
+# CORS Solution for Hugging Face Chat API
 
-## Problem
+## ✅ SOLVED: Using @huggingface/inference Package
 
-The Hugging Face Inference API does not support CORS (Cross-Origin Resource Sharing) for browser requests. This means direct API calls from the browser are blocked by the browser's security policy.
+The CORS issue has been resolved by using the official `@huggingface/inference` JavaScript package, which is specifically designed to work in browsers and handles CORS correctly.
 
-## Solutions
+### How It Works
 
-### Option 1: Browser Extension (Development/Testing Only)
+The `@huggingface/inference` package:
+- Is officially maintained by Hugging Face
+- Properly configured to work with browser CORS policies
+- Routes requests through Hugging Face's infrastructure with correct headers
+- Supports all Hugging Face Inference Providers
 
-Install a CORS browser extension to bypass CORS restrictions during development:
-
-**Chrome/Edge:**
-- [CORS Unblock](https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino)
-- [Allow CORS](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf)
-
-**Firefox:**
-- [CORS Everywhere](https://addons.mozilla.org/en-US/firefox/addon/cors-everywhere/)
-
-⚠️ **Warning:** Only use these extensions for development. Disable them when browsing other sites for security.
-
-### Option 2: Backend Proxy (Recommended for Production)
-
-Create a simple backend proxy that forwards requests to Hugging Face:
-
-**Example with Node.js/Express:**
+### Implementation
 
 ```javascript
-const express = require('express');
-const cors = require('cors');
-const fetch = require('node-fetch');
+import { HfInference } from '@huggingface/inference'
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// Initialize client with your HF token
+const hfClient = new HfInference('hf_...')
 
-app.post('/api/inference/:model', async (req, res) => {
-  const { model } = req.params;
-  const token = req.headers.authorization;
-  
-  try {
-    const response = await fetch(
-      `https://api-inference.huggingface.co/models/${model}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(req.body),
-      }
-    );
-    
-    const data = await response.json();
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.listen(3000, () => console.log('Proxy running on port 3000'));
+// Use chatCompletion for conversational models
+const completion = await hfClient.chatCompletion({
+  model: 'Qwen/Qwen2.5-7B-Instruct-1M',
+  messages: [
+    { role: 'user', content: 'Hello!' }
+  ],
+  max_tokens: 512,
+  provider: 'auto' // Let HF select the best available provider
+})
 ```
 
-Then update the fetch URL in `src/views/Bot.vue` to use your proxy:
-```javascript
-const response = await fetch(
-  `http://your-backend.com/api/inference/${selectedModel.value}`,
-  // ... rest of the config
-)
+### Key Points
+
+1. **No Custom baseURL**: Let the library handle routing automatically
+2. **Use chatCompletion()**: For conversational models (not textGeneration)
+3. **Provider Selection**: Use `provider: 'auto'` to let Hugging Face select the best available provider
+4. **Proper Error Handling**: The library provides specific error types:
+   - `InferenceClientInputError`: Model/task compatibility issues
+   - `InferenceClientProviderApiError`: Provider API errors
+   - `InferenceClientHubApiError`: Hub API errors
+   - `InferenceClientProviderOutputError`: Output format issues
+
+### Authentication
+
+Get your Hugging Face token from [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+
+**IMPORTANT:** Your token MUST have "Inference Providers" permission enabled:
+1. Click "Create new token"
+2. Give it a name (e.g., "TinyAI Chat")
+3. Enable the "Inference Providers" permission checkbox
+4. Click "Generate token"
+
+Without this permission, you'll get 400 Bad Request errors.
+
+### Recommended Models
+
+The app automatically loads all available models from the Hugging Face Inference Providers API. These models are guaranteed to work with the chat completion API.
+
+Models are loaded dynamically from:
+```
+https://huggingface.co/api/models?inference_provider=all&pipeline_tag=text-generation
 ```
 
-### Option 3: Hugging Face Inference Endpoints
+This ensures you always have access to the latest available models that support chat completion.
 
-Use [Hugging Face Inference Endpoints](https://huggingface.co/inference-endpoints) which support CORS configuration:
+### References
 
-1. Create an Inference Endpoint on Hugging Face
-2. Enable CORS in the endpoint settings
-3. Update the API URL in the code
+- [@huggingface/inference Documentation](https://huggingface.co/docs/huggingface.js/inference/README)
+- [Hugging Face Inference Providers](https://huggingface.co/docs/huggingface_hub/en/guides/inference)
+- [Chat Completion API](https://huggingface.co/docs/api-inference/en/tasks/chat-completion)
 
-### Option 4: Serverless Function
+---
 
-Deploy a serverless function (Vercel, Netlify, AWS Lambda) as a proxy:
+## Previous Attempts (For Reference)
 
-**Example with Vercel:**
+### ❌ Direct fetch() Calls
+Browser CORS policy blocks direct API calls to Hugging Face endpoints.
 
-Create `api/inference.js`:
-```javascript
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  const { model } = req.query;
-  const token = req.headers.authorization;
-  
-  const response = await fetch(
-    `https://api-inference.huggingface.co/models/${model}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': token,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(req.body),
-    }
-  );
-  
-  const data = await response.json();
-  res.json(data);
-}
-```
+### ❌ OpenAI SDK with Custom baseURL
+Still encounters CORS issues even with `dangerouslyAllowBrowser: true`.
 
-## Current Status
+### ❌ Backend Proxy Workarounds
+While functional, these add unnecessary complexity when the official package works correctly.
 
-The chat feature is functional but requires one of the above solutions to work in a browser environment. The code includes helpful error messages to guide users.
+### ✅ Solution
+Use the official `@huggingface/inference` package which is designed for browser usage and handles CORS properly.
+
+## Security Note
+
+Your Hugging Face API token is stored locally in your browser's localStorage and is never sent to any server other than Hugging Face's official API endpoints.
