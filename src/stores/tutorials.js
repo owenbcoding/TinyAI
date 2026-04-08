@@ -30,9 +30,10 @@ export const useTutorialsStore = defineStore('tutorials', () => {
     try {
       // Try multiple paths for compatibility with different environments
       const paths = [
-        './data/tutorials.json',
         '/data/tutorials.json',
-        `${import.meta.env.BASE_URL}data/tutorials.json`
+        './data/tutorials.json',
+        '../data/tutorials.json',
+        'data/tutorials.json'
       ]
       
       let response = null
