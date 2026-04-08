@@ -5,6 +5,38 @@
       <span>This chat interface is currently under development and not yet ready for use.</span>
     </div>
     
+    <!-- API Token Input -->
+    <div v-if="showTokenInput" class="token-input-overlay">
+      <div class="token-input-card">
+        <h3>
+          <i class="fas fa-key"></i>
+          Hugging Face API Token Required
+        </h3>
+        <p>To use the chat feature, you need a Hugging Face API token.</p>
+        <ol>
+          <li>Go to <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Hugging Face Settings</a></li>
+          <li>Create a new token with "Read" access</li>
+          <li>Paste it below</li>
+        </ol>
+        <div class="token-input-group">
+          <input 
+            v-model="API_TOKEN" 
+            type="password" 
+            placeholder="hf_..." 
+            class="token-input"
+            @keydown.enter="saveApiToken"
+          />
+          <button @click="saveApiToken" class="btn-save-token" :disabled="!API_TOKEN.trim()">
+            Save Token
+          </button>
+        </div>
+        <p class="token-note">
+          <i class="fas fa-lock"></i>
+          Your token is stored locally in your browser and never sent to our servers.
+        </p>
+      </div>
+    </div>
+    
     <div class="chat-messages" ref="messagesContainer" v-if="messages.length > 0">
       <div class="messages-inner">
         <div v-for="message in messages" :key="message.id" class="message" :class="message.role">
@@ -36,6 +68,7 @@
             @keydown.enter.exact.prevent="sendMessage"
             @input="autoResize"
             ref="inputField"
+            :disabled="!API_TOKEN"
           ></textarea>
         </div>
 
@@ -48,6 +81,11 @@
             <button class="btn-footer">
               <i class="fas fa-wrench"></i>
               Tools
+            </button>
+            
+            <button v-if="API_TOKEN" @click="clearApiToken" class="btn-footer" title="Clear API token">
+              <i class="fas fa-key"></i>
+              Clear Token
             </button>
           </div>
           
@@ -184,8 +222,22 @@ const hardwareTiers = {
   datacenter: { vram: 80, name: 'Datacenter', icon: 'fa-database' }
 }
 
-// TODO: Replace with your API token management
-const API_TOKEN = 'YOUR_HF_TOKEN_HERE'
+// API token management - stored in localStorage
+const API_TOKEN = ref(localStorage.getItem('hf_api_token') || '')
+const showTokenInput = ref(!API_TOKEN.value)
+
+function saveApiToken() {
+  if (API_TOKEN.value.trim()) {
+    localStorage.setItem('hf_api_token', API_TOKEN.value.trim())
+    showTokenInput.value = false
+  }
+}
+
+function clearApiToken() {
+  localStorage.removeItem('hf_api_token')
+  API_TOKEN.value = ''
+  showTokenInput.value = true
+}
 
 // Model size estimates (in GB VRAM)
 const modelSizeEstimates = {
@@ -482,7 +534,7 @@ async function sendMessage() {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${API_TOKEN}`,
+          'Authorization': `Bearer ${API_TOKEN.value}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -577,6 +629,131 @@ function autoResize(event) {
 .wip-notice i {
   font-size: 1rem;
 }
+
+.token-input-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.token-input-card {
+  background: var(--bg-secondary, #161b22);
+  border: 1px solid var(--border-primary, #30363d);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.token-input-card h3 {
+  color: var(--text-primary, #e6edf3);
+  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.token-input-card h3 i {
+  color: var(--accent-blue, #58a6ff);
+}
+
+.token-input-card p {
+  color: var(--text-secondary, #7d8590);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0 0 1rem 0;
+}
+
+.token-input-card ol {
+  color: var(--text-secondary, #7d8590);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 1.25rem;
+  padding: 0;
+}
+
+.token-input-card ol li {
+  margin-bottom: 0.5rem;
+}
+
+.token-input-card a {
+  color: var(--accent-blue, #58a6ff);
+  text-decoration: none;
+}
+
+.token-input-card a:hover {
+  text-decoration: underline;
+}
+
+.token-input-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.token-input {
+  flex: 1;
+  background: var(--bg-tertiary, #21262d);
+  border: 1px solid var(--border-primary, #30363d);
+  border-radius: 6px;
+  color: var(--text-primary, #e6edf3);
+  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
+  font-family: 'Courier New', monospace;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.token-input:focus {
+  border-color: var(--accent-blue, #58a6ff);
+  background: var(--bg-secondary, #161b22);
+}
+
+.btn-save-token {
+  background: var(--accent-blue, #58a6ff);
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-save-token:hover:not(:disabled) {
+  background: #4a95e8;
+}
+
+.btn-save-token:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.token-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary, #484f58);
+  margin: 0;
+}
+
+.token-note i {
+  color: var(--accent-green, #3fb950);
+}
+
 
 .chat-section.centered {
   justify-content: center;
