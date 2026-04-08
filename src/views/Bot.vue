@@ -304,7 +304,7 @@ const hardwareTiers = {
 
 // API token management - stored in localStorage
 const API_TOKEN = ref(localStorage.getItem('hf_api_token') || '')
-const showTokenInput = ref(!API_TOKEN.value)
+const showTokenInput = ref(false) // Don't auto-show on mount
 
 // Initialize HfInference client
 let hfClient = null
