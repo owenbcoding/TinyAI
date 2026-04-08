@@ -543,19 +543,24 @@ async function sendMessage() {
   isLoading.value = true
 
   try {
+    // Build conversation history for context
+    const conversationMessages = messages.value.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }))
+
     // Use chatCompletion for instruction/chat models
     const response = await hfClient.chatCompletion({
       model: selectedModel.value,
-      messages: [
-        { role: 'user', content: prompt }
-      ],
+      messages: conversationMessages,
       max_tokens: 512,
       temperature: 0.7,
-      top_p: 0.95
+      top_p: 0.95,
+      stream: false
     })
     
     let assistantText = ''
-    if (response.choices && response.choices.length > 0) {
+    if (response.choices && response.choices.length > 0 && response.choices[0].message) {
       assistantText = response.choices[0].message.content
     } else {
       assistantText = 'Sorry, I could not generate a response.'
@@ -573,17 +578,22 @@ async function sendMessage() {
     await nextTick()
     scrollToBottom()
   } catch (error) {
+    console.error('Chat error:', error)
     let errorMessage = ''
     
-    // Handle model loading errors
+    // Handle different error types
     if (error.message && error.message.includes('loading')) {
       errorMessage = `⏳ Model is loading... This can take 20-30 seconds. Please try again in a moment.`
     } else if (error.message && error.message.includes('rate limit')) {
       errorMessage = `⚠️ Rate limit exceeded. Please wait a moment and try again.`
     } else if (error.message && error.message.includes('not supported')) {
       errorMessage = `⚠️ This model may not be available. Try selecting a different model from the dropdown.`
+    } else if (error.message && error.message.includes('400')) {
+      errorMessage = `⚠️ Bad request. This model might not support chat completion. Try a different model like "meta-llama/Llama-3.2-3B-Instruct".`
+    } else if (error.message && error.message.includes('401') || error.message.includes('403')) {
+      errorMessage = `⚠️ Authentication error. Please check your API token.`
     } else {
-      errorMessage = `Error: ${error.message || 'Unknown error occurred'}`
+      errorMessage = `Error: ${error.message || 'Unknown error occurred'}\n\nTry selecting a different model from the dropdown.`
     }
     
     const errorMsg = {
