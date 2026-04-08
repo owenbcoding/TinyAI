@@ -2,7 +2,7 @@
   <section class="chat-section" :class="{ 'centered': messages.length === 0 }">
     <div class="wip-notice">
       <i class="fas fa-tools"></i>
-      <span>This chat interface is under development. Due to CORS restrictions, it requires a browser extension or backend proxy to work properly.</span>
+      <span>Chat interface ready! Enter your Hugging Face API token to start chatting with AI models.</span>
     </div>
     
     <!-- API Token Input -->
@@ -194,6 +194,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted, watch, computed } from 'vue'
+import { HfInference } from '@huggingface/inference'
 
 const messages = ref([])
 const userInput = ref('')
@@ -226,9 +227,16 @@ const hardwareTiers = {
 const API_TOKEN = ref(localStorage.getItem('hf_api_token') || '')
 const showTokenInput = ref(!API_TOKEN.value)
 
+// Initialize HfInference client
+let hfClient = null
+if (API_TOKEN.value) {
+  hfClient = new HfInference(API_TOKEN.value)
+}
+
 function saveApiToken() {
   if (API_TOKEN.value.trim()) {
     localStorage.setItem('hf_api_token', API_TOKEN.value.trim())
+    hfClient = new HfInference(API_TOKEN.value.trim())
     showTokenInput.value = false
   }
 }
@@ -236,6 +244,7 @@ function saveApiToken() {
 function clearApiToken() {
   localStorage.removeItem('hf_api_token')
   API_TOKEN.value = ''
+  hfClient = null
   showTokenInput.value = true
 }
 
@@ -508,7 +517,7 @@ function clearChat() {
 async function sendMessage() {
   if (!userInput.value.trim() || isLoading.value) return
   
-  if (!API_TOKEN.value) {
+  if (!API_TOKEN.value || !hfClient) {
     showTokenInput.value = true
     return
   }
@@ -534,47 +543,21 @@ async function sendMessage() {
   isLoading.value = true
 
   try {
-    // Note: Hugging Face Inference API has CORS restrictions
-    // For production, consider using a backend proxy or Hugging Face Inference Endpoints
-    const response = await fetch(
-      `https://api-inference.huggingface.co/models/${selectedModel.value}`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${API_TOKEN.value}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 512,
-            temperature: 0.7,
-            top_p: 0.95,
-            return_full_text: false
-          }
-        }),
+    // Use the official HfInference library - it handles CORS properly!
+    const response = await hfClient.textGeneration({
+      model: selectedModel.value,
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 512,
+        temperature: 0.7,
+        top_p: 0.95,
+        return_full_text: false
       }
-    )
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`API Error (${response.status}): ${errorText}`)
-    }
-
-    const data = await response.json()
+    })
     
     let assistantText = ''
-    if (data.error) {
-      // Handle model loading errors
-      if (data.error.includes('loading')) {
-        assistantText = `⏳ Model is loading... This can take 20-30 seconds. Please try again in a moment.`
-      } else {
-        assistantText = `Error: ${data.error}`
-      }
-    } else if (Array.isArray(data) && data[0]?.generated_text) {
-      assistantText = data[0].generated_text
-    } else if (data.generated_text) {
-      assistantText = data.generated_text
+    if (response.generated_text) {
+      assistantText = response.generated_text
     } else {
       assistantText = 'Sorry, I could not generate a response.'
     }
@@ -593,11 +576,13 @@ async function sendMessage() {
   } catch (error) {
     let errorMessage = ''
     
-    // Check for CORS error
-    if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-      errorMessage = `⚠️ CORS Error: Direct browser access to Hugging Face API is blocked.\n\nSolutions:\n1. Use a browser extension like "CORS Unblock" (for testing only)\n2. Deploy with a backend proxy\n3. Use Hugging Face Inference Endpoints with CORS enabled\n\nFor now, this chat feature works best when deployed with a proper backend.`
+    // Handle model loading errors
+    if (error.message && error.message.includes('loading')) {
+      errorMessage = `⏳ Model is loading... This can take 20-30 seconds. Please try again in a moment.`
+    } else if (error.message && error.message.includes('rate limit')) {
+      errorMessage = `⚠️ Rate limit exceeded. Please wait a moment and try again.`
     } else {
-      errorMessage = `Error: ${error.message}`
+      errorMessage = `Error: ${error.message || 'Unknown error occurred'}`
     }
     
     const errorMsg = {
