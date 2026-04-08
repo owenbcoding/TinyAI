@@ -1,6 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+// Fallback tutorials if fetch fails
+const fallbackTutorials = [
+  {
+    id: 'tutorial-001',
+    title: 'Getting Started with Transformers',
+    description: 'Learn the basics of transformer models and how to use them for NLP tasks.',
+    difficulty: 'beginner',
+    duration: '15 min',
+    tags: ['transformers', 'nlp', 'basics'],
+    author: 'Tiny AI Team',
+    lastUpdated: '2026-04-08',
+    content: '# Getting Started with Transformers\n\n## Introduction\n\nTransformers have revolutionized natural language processing.'
+  }
+]
+
 export const useTutorialsStore = defineStore('tutorials', () => {
   // State
   const tutorials = ref([])
@@ -13,18 +28,39 @@ export const useTutorialsStore = defineStore('tutorials', () => {
     error.value = null
     
     try {
-      const response = await fetch('./data/tutorials.json')
-      if (response.ok) {
-        const data = await response.json()
-        tutorials.value = data.resources || []
-      } else {
-        throw new Error('Failed to load tutorials')
+      // Try multiple paths for compatibility with different environments
+      const paths = [
+        './data/tutorials.json',
+        '/data/tutorials.json',
+        `${import.meta.env.BASE_URL}data/tutorials.json`
+      ]
+      
+      let response = null
+      let lastError = null
+      
+      for (const path of paths) {
+        try {
+          response = await fetch(path)
+          if (response.ok) {
+            break
+          }
+        } catch (err) {
+          lastError = err
+          continue
+        }
       }
+      
+      if (!response || !response.ok) {
+        throw lastError || new Error(`HTTP error! status: ${response?.status}`)
+      }
+      
+      const data = await response.json()
+      tutorials.value = data.resources || []
     } catch (err) {
-      error.value = err.message
       console.error('Failed to load tutorials:', err)
-      // Fallback to empty array
-      tutorials.value = []
+      error.value = err.message
+      // Use fallback tutorials
+      tutorials.value = fallbackTutorials
     } finally {
       isLoading.value = false
     }
